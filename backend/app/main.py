@@ -5,6 +5,9 @@ Responsibilities kept here on purpose:
 - attach a request-ID + access-log middleware
 - translate domain exceptions (AppError) into HTTP responses in ONE place, so
   services never import FastAPI or set status codes themselves
+
+Schema creation is NOT done here. Alembic migrations own the schema now (Stage
+3). The temporary create_all shim from Stage 2 has been removed.
 """
 import logging
 import uuid
@@ -58,10 +61,3 @@ async def app_error_handler(_: Request, exc: AppError) -> JSONResponse:
 
 
 app.include_router(api_router, prefix=settings.api_v1_prefix)
- # TEMPORARY (Stage 2 only): create tables from models so the app works before
-# Alembic migrations exist. Removed in Stage 3.
-from app.db.base import Base
-from app.db.session import engine
-from app.models import user  # noqa: F401  # noqa: F401
-
-Base.metadata.create_all(bind=engine)

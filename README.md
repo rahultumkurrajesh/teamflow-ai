@@ -60,6 +60,44 @@ curl -X POST http://localhost:8000/api/v1/users \
   -d '{"email":"you@example.com","full_name":"Your Name","password":"supersecret"}'
 ```
 
+## Data model (Stage 3)
+
+Eight tables with real foreign keys, indexes, and delete behaviour:
+
+```
+organizations
+   |
+   +-- users            (organization_id, SET NULL on org delete)
+   +-- projects         (organization_id, CASCADE on org delete)
+          |
+          +-- tasks         (project_id CASCADE; assignee_id -> users SET NULL)
+          |      +-- comments  (task_id CASCADE; author_id -> users SET NULL)
+          +-- documents     (project_id CASCADE)
+
+notifications   (user_id CASCADE)
+audit_logs      (actor_id -> users SET NULL)
+```
+
+Delete rules are deliberate: deleting a project removes its tasks, comments, and
+documents (they cannot exist without it), but deleting a user who authored a
+comment keeps the comment and just nulls the author, so history survives.
+
+Indexes exist where the real queries are: unique on user email, composite on
+(project_id, status) for the task board, (user_id, is_read) for unread
+notifications, and (entity_type, entity_id) for audit lookups.
+
+## Migrations
+
+The schema is managed by Alembic, not by the app. The container runs
+`alembic upgrade head` on startup (see entrypoint.sh) before serving requests.
+
+To create a new migration after changing a model:
+
+```bash
+docker compose exec backend alembic revision --autogenerate -m "describe change"
+docker compose exec backend alembic upgrade head
+```
+
 ## Run the tests
 
 ```bash
@@ -75,7 +113,7 @@ mypy app
 
 - [x] Stage 1: Repository architecture
 - [x] Stage 2: Backend foundation (config, logging, errors, DB, one entity end to end, health, tests, Dockerfile, compose)
-- [ ] Stage 3: PostgreSQL models + Alembic migrations (organizations, projects, tasks, comments, documents, notifications, audit logs)
+- [x] Stage 3: PostgreSQL models + Alembic migrations (organizations, projects, tasks, comments, documents, notifications, audit logs)
 - [ ] Stage 4: Authentication + RBAC (JWT login, protected routes, role checks)
 - [ ] Stage 5: Frontend foundation (React, TypeScript, Vite, Tailwind, routing)
 - [ ] Stage 6: Projects / tasks / comments
