@@ -1,16 +1,15 @@
 """User table.
 
-Demonstrates the database engineering the spec asks for: a UUID primary key, a
-unique index on email (both a constraint and a lookup index), a not-null role
-column with a sane default, and the timestamp mixin. Foreign keys arrive with
-the Organization and Project tables in the next stage.
+A user belongs to one organization (nullable so the very first user can be
+created before an org exists, then attached). Demonstrates a foreign key, a
+unique indexed email, an enum role for RBAC, and the timestamp mixin.
 """
 import enum
 import uuid
 
-from sqlalchemy import Enum, String
+from sqlalchemy import Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, new_uuid
 
@@ -35,3 +34,10 @@ class User(Base, TimestampMixin):
         Enum(UserRole, name="user_role"), default=UserRole.member, nullable=False
     )
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
+
+    organization_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id", ondelete="SET NULL")
+    )
+    organization: Mapped["Organization | None"] = relationship(  # noqa: F821
+        back_populates="users"
+    )
