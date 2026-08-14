@@ -115,7 +115,7 @@ mypy app
 - [x] Stage 2: Backend foundation (config, logging, errors, DB, one entity end to end, health, tests, Dockerfile, compose)
 - [x] Stage 3: PostgreSQL models + Alembic migrations (organizations, projects, tasks, comments, documents, notifications, audit logs)
 - [x] Stage 4: Authentication + RBAC (JWT login, refresh tokens, protected routes, role checks)
-- [ ] Stage 5: Frontend foundation (React, TypeScript, Vite, Tailwind, routing)
+- [x] Stage 5: Frontend foundation (React, TypeScript, Vite, Tailwind, routing, authenticated sign-in)
 - [ ] Stage 6: Projects / tasks / comments
 - [ ] Stage 7: Redis + background worker (notifications)
 - [ ] Stage 8: Document upload (S3 locally via MinIO)
