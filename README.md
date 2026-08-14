@@ -114,7 +114,7 @@ mypy app
 - [x] Stage 1: Repository architecture
 - [x] Stage 2: Backend foundation (config, logging, errors, DB, one entity end to end, health, tests, Dockerfile, compose)
 - [x] Stage 3: PostgreSQL models + Alembic migrations (organizations, projects, tasks, comments, documents, notifications, audit logs)
-- [ ] Stage 4: Authentication + RBAC (JWT login, protected routes, role checks)
+- [x] Stage 4: Authentication + RBAC (JWT login, refresh tokens, protected routes, role checks)
 - [ ] Stage 5: Frontend foundation (React, TypeScript, Vite, Tailwind, routing)
 - [ ] Stage 6: Projects / tasks / comments
 - [ ] Stage 7: Redis + background worker (notifications)
