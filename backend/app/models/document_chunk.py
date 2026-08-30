@@ -36,6 +36,7 @@ class DocumentChunk(Base, TimestampMixin):
             "embedding",
             postgresql_using="hnsw",
             postgresql_with={"m": 16, "ef_construction": 200},
+            postgresql_ops={"embedding": "vector_cosine_ops"},
         ),
     )
 

@@ -14,6 +14,7 @@ redis==5.*
 rq==2.*
 boto3==1.28.*
 botocore==1.31.*
+pgvector==0.3.6
 
 # dev / test
 pytest==8.*

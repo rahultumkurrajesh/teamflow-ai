@@ -16,7 +16,7 @@ from pgvector.sqlalchemy import Vector
 
 # revision identifiers, used by Alembic.
 revision = '0002'
-down_revision = '0001'
+down_revision = '0001_initial'
 branch_labels = None
 depends_on = None
 
@@ -46,7 +46,8 @@ def upgrade() -> None:
         'document_chunks',
         ['embedding'],
         postgresql_using='hnsw',
-        postgresql_with={'m': 16, 'ef_construction': 200}
+        postgresql_with={'m': 16, 'ef_construction': 200},
+        postgresql_ops={'embedding': 'vector_cosine_ops'}
     )
 
 
