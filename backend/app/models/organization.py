@@ -5,12 +5,17 @@ to an organization. This is what makes the app multi-tenant: every query for
 projects/tasks is ultimately scoped to an organization.
 """
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, new_uuid
+
+if TYPE_CHECKING:
+    from app.models.user import User
+    from app.models.project import Project
 
 
 class Organization(Base, TimestampMixin):

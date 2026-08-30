@@ -6,12 +6,18 @@ is a composite index on (project_id, status) because the most common query is
 """
 import enum
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, new_uuid
+
+if TYPE_CHECKING:
+    from app.models.project import Project
+    from app.models.user import User
+    from app.models.comment import Comment
 
 
 class TaskStatus(str, enum.Enum):
