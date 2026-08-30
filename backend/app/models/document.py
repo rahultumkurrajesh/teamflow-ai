@@ -16,6 +16,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base, TimestampMixin, new_uuid
 
 if TYPE_CHECKING:
+    from app.models.document_chunk import DocumentChunk
     from app.models.project import Project
 
 
@@ -48,3 +49,4 @@ class Document(Base, TimestampMixin):
         index=True,
     )
     project: Mapped["Project"] = relationship(back_populates="documents")  # noqa: F821
+    chunks: Mapped[list["DocumentChunk"]] = relationship(back_populates="document")  # noqa: F821

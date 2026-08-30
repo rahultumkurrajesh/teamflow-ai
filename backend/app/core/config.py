@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     s3_bucket_name: str = Field(default="teamflow")
     s3_region: str = Field(default="us-east-1")
 
+    # RAG & Embeddings
+    embedding_dimension: int = Field(default=1536)  # OpenAI text-embedding-3-small dimension
+
     # Auth (overridden in every non-dev environment)
     jwt_secret_key: str = Field(default="dev-only-change-me")
     jwt_algorithm: str = "HS256"

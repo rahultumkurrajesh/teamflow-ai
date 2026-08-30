@@ -4,7 +4,7 @@
 # port 8000 is published so the browser can reach the API.
 services:
   db:
-    image: postgres:16
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_USER: teamflow
       POSTGRES_PASSWORD: teamflow
