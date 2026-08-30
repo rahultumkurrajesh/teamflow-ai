@@ -6,12 +6,16 @@ unique indexed email, an enum role for RBAC, and the timestamp mixin.
 """
 import enum
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Enum, ForeignKey, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, new_uuid
+
+if TYPE_CHECKING:
+    from app.models.organization import Organization
 
 
 class UserRole(str, enum.Enum):

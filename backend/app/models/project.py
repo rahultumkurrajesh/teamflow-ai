@@ -4,12 +4,18 @@ Belongs to an organization. Has many tasks. Deleting a project cascades to its
 tasks (ondelete CASCADE) because a task cannot exist without its project.
 """
 import uuid
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base, TimestampMixin, new_uuid
+
+if TYPE_CHECKING:
+    from app.models.organization import Organization
+    from app.models.task import Task
+    from app.models.document import Document
 
 
 class Project(Base, TimestampMixin):

@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     redis_host: str = Field(default="localhost")
     redis_port: int = Field(default=6379)
 
+    # S3/MinIO Storage
+    s3_endpoint_url: str = Field(default="")  # Empty for real AWS S3, set to MinIO URL for local dev
+    s3_access_key_id: str = Field(default="minioadmin")
+    s3_secret_access_key: str = Field(default="minioadmin")
+    s3_bucket_name: str = Field(default="teamflow")
+    s3_region: str = Field(default="us-east-1")
+
     # Auth (overridden in every non-dev environment)
     jwt_secret_key: str = Field(default="dev-only-change-me")
     jwt_algorithm: str = "HS256"
