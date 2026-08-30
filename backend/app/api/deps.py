@@ -22,11 +22,13 @@ from app.core.security import decode_token
 from app.db.session import get_db
 from app.models.user import User, UserRole
 from app.repositories.comment import CommentRepository
+from app.repositories.notification import NotificationRepository
 from app.repositories.project import ProjectRepository
 from app.repositories.task import TaskRepository
 from app.repositories.user import UserRepository
 from app.services.auth import AuthService
 from app.services.comment import CommentService
+from app.services.notification import NotificationService
 from app.services.project import ProjectService
 from app.services.task import TaskService
 from app.services.user import UserService
@@ -91,8 +93,14 @@ def get_project_service(db: Session = Depends(get_db)) -> ProjectService:
 
 
 def get_task_service(db: Session = Depends(get_db)) -> TaskService:
-    return TaskService(TaskRepository(db), db)
+    notification_service = get_notification_service(db)
+    return TaskService(TaskRepository(db), db, notification_service)
 
 
 def get_comment_service(db: Session = Depends(get_db)) -> CommentService:
-    return CommentService(CommentRepository(db), db)
+    notification_service = get_notification_service(db)
+    return CommentService(CommentRepository(db), db, notification_service)
+
+
+def get_notification_service(db: Session = Depends(get_db)) -> NotificationService:
+    return NotificationService(NotificationRepository(db), db)

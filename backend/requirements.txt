@@ -10,6 +10,7 @@ passlib[bcrypt]==1.7.*
 bcrypt==4.0.*  # passlib 1.7 reads bcrypt.__about__, removed in bcrypt 5
 PyJWT==2.*
 redis==5.*
+rq==2.*
 
 # dev / test
 pytest==8.*

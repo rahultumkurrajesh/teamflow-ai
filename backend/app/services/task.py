@@ -3,6 +3,10 @@
 Business rules: tasks belong to a project which belongs to an organization.
 A user may only access tasks in projects in their own organization. Every
 create, update, delete is audited. The service owns the transaction.
+
+When a task is assigned or reassigned, a notification job is enqueued to
+notify the assignee. The API does not wait for the notification; the job
+is processed asynchronously by a background worker.
 """
 import uuid
 
@@ -15,12 +19,16 @@ from app.models.task import Task
 from app.models.user import User
 from app.repositories.task import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
+from app.services.notification import NotificationService
 
 
 class TaskService:
-    def __init__(self, repo: TaskRepository, db: Session) -> None:
+    def __init__(
+        self, repo: TaskRepository, db: Session, notification_service: NotificationService
+    ) -> None:
         self.repo = repo
         self.db = db
+        self.notification_service = notification_service
 
     def create(
         self, current_user: User, project_id: uuid.UUID, data: TaskCreate
@@ -102,6 +110,10 @@ class TaskService:
         if task.project_id != project_id:
             raise NotFoundError("Task not found in this project.")
 
+        # Track if assignee changed so we can enqueue a notification
+        old_assignee_id = task.assignee_id
+        new_assignee_id = data.assignee_id
+
         # Update fields if provided
         if data.title is not None:
             task.title = data.title
@@ -126,6 +138,11 @@ class TaskService:
 
         self.db.commit()
         self.db.refresh(task)
+
+        # Enqueue notification if assignee changed
+        if new_assignee_id is not None and new_assignee_id != old_assignee_id:
+            self.notification_service.enqueue_task_assigned(task_id, new_assignee_id)
+
         return task
 
     def delete(

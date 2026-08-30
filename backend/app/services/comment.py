@@ -4,6 +4,10 @@ Business rules: comments belong to a task which belongs to a project which
 belongs to an organization. A user may only access comments in tasks in projects
 in their own organization. Every create and delete is audited. The service owns
 the transaction. Comments cannot be updated (append-only for now).
+
+When a comment is created on a task with an assignee, a notification job is
+enqueued. The API does not wait for the notification; the job is processed
+asynchronously by a background worker.
 """
 import uuid
 
@@ -17,12 +21,16 @@ from app.models.task import Task
 from app.models.user import User
 from app.repositories.comment import CommentRepository
 from app.schemas.comment import CommentCreate
+from app.services.notification import NotificationService
 
 
 class CommentService:
-    def __init__(self, repo: CommentRepository, db: Session) -> None:
+    def __init__(
+        self, repo: CommentRepository, db: Session, notification_service: NotificationService
+    ) -> None:
         self.repo = repo
         self.db = db
+        self.notification_service = notification_service
 
     def create(
         self,
@@ -62,6 +70,11 @@ class CommentService:
 
         self.db.commit()
         self.db.refresh(comment)
+
+        # Enqueue notification if the task has an assignee
+        if task.assignee_id:
+            self.notification_service.enqueue_comment_added(task_id, comment.id, task.assignee_id)
+
         return comment
 
     def get(

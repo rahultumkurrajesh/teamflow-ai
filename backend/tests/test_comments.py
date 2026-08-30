@@ -11,14 +11,20 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.exceptions import NotFoundError, PermissionError
 from app.db.base import Base
-from app.models.comment import Comment
-from app.models.organization import Organization
-from app.models.project import Project
-from app.models.task import Task
-from app.models.user import User, UserRole
+# Import all models to ensure they're registered with SQLAlchemy's registry
+from app.models.comment import Comment  # noqa: F401
+from app.models.organization import Organization  # noqa: F401
+from app.models.project import Project  # noqa: F401
+from app.models.task import Task  # noqa: F401
+from app.models.user import User, UserRole  # noqa: F401
+from app.models.document import Document  # noqa: F401
+from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.notification import Notification  # noqa: F401
 from app.repositories.comment import CommentRepository
+from app.repositories.notification import NotificationRepository
 from app.schemas.comment import CommentCreate
 from app.services.comment import CommentService
+from app.services.notification import NotificationService
 
 
 @pytest.fixture(scope="function")
@@ -100,7 +106,9 @@ def test_create_comment(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
     data = CommentCreate(body="Test comment")
 
     comment = service.create(user, project.id, task.id, data)
@@ -116,7 +124,9 @@ def test_create_comment_project_not_found(db: Session, org: Organization, user: 
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
     data = CommentCreate(body="Test comment")
 
     with pytest.raises(NotFoundError):
@@ -132,7 +142,9 @@ def test_create_comment_task_not_found(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
     data = CommentCreate(body="Test comment")
 
     with pytest.raises(NotFoundError):
@@ -149,7 +161,9 @@ def test_create_comment_task_wrong_project(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
     data = CommentCreate(body="Test comment")
 
     with pytest.raises(NotFoundError):
@@ -168,7 +182,9 @@ def test_create_comment_denied_by_org(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
     data = CommentCreate(body="Test comment")
 
     with pytest.raises(PermissionError):
@@ -190,7 +206,9 @@ def test_get_comment(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     result = service.get(user, project.id, task.id, comment.id)
 
@@ -208,7 +226,9 @@ def test_get_comment_not_found(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     with pytest.raises(NotFoundError):
         service.get(user, project.id, task.id, uuid.uuid4())
@@ -226,7 +246,9 @@ def test_get_comment_wrong_task(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     with pytest.raises(NotFoundError):
         service.get(user, project.id, uuid.uuid4(), comment.id)
@@ -246,7 +268,9 @@ def test_get_comment_denied_by_org(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     with pytest.raises(PermissionError):
         service.get(other_user, project.id, task.id, comment.id)
@@ -267,7 +291,9 @@ def test_list_comments(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     comments = service.list(user, project.id, task.id, limit=50, offset=0)
 
@@ -290,7 +316,9 @@ def test_delete_comment(
     comment_id = comment.id
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     service.delete(user, project.id, task.id, comment_id)
 
@@ -308,7 +336,9 @@ def test_delete_comment_not_found(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     with pytest.raises(NotFoundError):
         service.delete(user, project.id, task.id, uuid.uuid4())
@@ -326,7 +356,9 @@ def test_delete_comment_wrong_task(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     with pytest.raises(NotFoundError):
         service.delete(user, project.id, uuid.uuid4(), comment.id)
@@ -346,7 +378,9 @@ def test_delete_comment_denied_by_org(
     db.commit()
 
     repo = CommentRepository(db)
-    service = CommentService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = CommentService(repo, db, notif_service)
 
     with pytest.raises(PermissionError):
         service.delete(other_user, project.id, task.id, comment.id)

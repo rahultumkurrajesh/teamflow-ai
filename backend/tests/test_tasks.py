@@ -11,13 +11,20 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.exceptions import NotFoundError, PermissionError
 from app.db.base import Base
-from app.models.organization import Organization
-from app.models.project import Project
-from app.models.task import Task, TaskStatus
-from app.models.user import User, UserRole
+# Import all models to ensure they're registered with SQLAlchemy's registry
+from app.models.organization import Organization  # noqa: F401
+from app.models.project import Project  # noqa: F401
+from app.models.task import Task, TaskStatus  # noqa: F401
+from app.models.user import User, UserRole  # noqa: F401
+from app.models.comment import Comment  # noqa: F401
+from app.models.document import Document  # noqa: F401
+from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.notification import Notification  # noqa: F401
 from app.repositories.task import TaskRepository
 from app.schemas.task import TaskCreate, TaskUpdate
 from app.services.task import TaskService
+from app.services.notification import NotificationService
+from app.repositories.notification import NotificationRepository
 
 
 @pytest.fixture(scope="function")
@@ -86,7 +93,9 @@ def test_create_task(db: Session, org: Organization, user: User, project: Projec
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
     data = TaskCreate(title="Test Task", description="A test task", status=TaskStatus.todo)
 
     task = service.create(user, project.id, data)
@@ -107,7 +116,9 @@ def test_create_task_with_assignee(
 
     assignee_id = uuid.uuid4()
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
     data = TaskCreate(title="Test Task", assignee_id=assignee_id)
 
     task = service.create(user, project.id, data)
@@ -121,7 +132,9 @@ def test_create_task_project_not_found(db: Session, org: Organization, user: Use
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
     data = TaskCreate(title="Test Task")
 
     with pytest.raises(NotFoundError):
@@ -139,7 +152,9 @@ def test_create_task_denied_by_org(
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
     data = TaskCreate(title="Test Task")
 
     with pytest.raises(PermissionError):
@@ -158,7 +173,9 @@ def test_get_task(db: Session, org: Organization, user: User, project: Project) 
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
 
     result = service.get(user, project.id, task.id)
 
@@ -173,7 +190,9 @@ def test_get_task_not_found(db: Session, org: Organization, user: User, project:
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
 
     with pytest.raises(NotFoundError):
         service.get(user, project.id, uuid.uuid4())
@@ -190,7 +209,9 @@ def test_get_task_wrong_project(
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
 
     with pytest.raises(NotFoundError):
         service.get(user, uuid.uuid4(), task.id)
@@ -209,7 +230,9 @@ def test_get_task_denied_by_org(
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
 
     with pytest.raises(PermissionError):
         service.get(other_user, project.id, task.id)
@@ -225,7 +248,9 @@ def test_list_tasks(db: Session, org: Organization, user: User, project: Project
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
 
     tasks = service.list(user, project.id, limit=50, offset=0)
 
@@ -244,7 +269,9 @@ def test_update_task(db: Session, org: Organization, user: User, project: Projec
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
     data = TaskUpdate(title="New Title", status=TaskStatus.in_progress)
 
     result = service.update(user, project.id, task.id, data)
@@ -264,7 +291,9 @@ def test_update_task_partial(
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
     data = TaskUpdate(title="New Title")
 
     result = service.update(user, project.id, task.id, data)
@@ -282,7 +311,9 @@ def test_update_task_not_found(
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
     data = TaskUpdate(title="New Title")
 
     with pytest.raises(NotFoundError):
@@ -300,7 +331,9 @@ def test_update_task_wrong_project(
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
     data = TaskUpdate(title="New Title")
 
     with pytest.raises(NotFoundError):
@@ -320,7 +353,9 @@ def test_delete_task(db: Session, org: Organization, user: User, project: Projec
     task_id = task.id
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
 
     service.delete(user, project.id, task_id)
 
@@ -337,7 +372,9 @@ def test_delete_task_not_found(
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
 
     with pytest.raises(NotFoundError):
         service.delete(user, project.id, uuid.uuid4())
@@ -354,7 +391,9 @@ def test_delete_task_wrong_project(
     db.commit()
 
     repo = TaskRepository(db)
-    service = TaskService(repo, db)
+    notif_repo = NotificationRepository(db)
+    notif_service = NotificationService(notif_repo, db)
+    service = TaskService(repo, db, notif_service)
 
     with pytest.raises(NotFoundError):
         service.delete(user, uuid.uuid4(), task.id)

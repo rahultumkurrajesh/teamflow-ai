@@ -12,9 +12,15 @@ from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.exceptions import NotFoundError, PermissionError
 from app.db.base import Base
-from app.models.organization import Organization
-from app.models.project import Project
-from app.models.user import User, UserRole
+# Import all models to ensure they're registered with SQLAlchemy's registry
+from app.models.organization import Organization  # noqa: F401
+from app.models.project import Project  # noqa: F401
+from app.models.user import User, UserRole  # noqa: F401
+from app.models.task import Task  # noqa: F401
+from app.models.comment import Comment  # noqa: F401
+from app.models.document import Document  # noqa: F401
+from app.models.audit_log import AuditLog  # noqa: F401
+from app.models.notification import Notification  # noqa: F401
 from app.repositories.project import ProjectRepository
 from app.schemas.project import ProjectCreate, ProjectUpdate
 from app.services.project import ProjectService
