@@ -41,6 +41,7 @@ class Settings(BaseSettings):
 
     # RAG & Embeddings
     embedding_dimension: int = Field(default=1536)  # OpenAI text-embedding-3-small dimension
+    openai_api_key: str = Field(default="")  # OpenAI API key for embeddings (empty in dev, set in prod)
 
     # Auth (overridden in every non-dev environment)
     jwt_secret_key: str = Field(default="dev-only-change-me")

@@ -12,6 +12,7 @@ Environment variables:
     S3_REGION: AWS region (default: us-east-1)
 """
 import logging
+from abc import ABC, abstractmethod
 from io import BytesIO
 
 import boto3
@@ -24,7 +25,36 @@ logger = logging.getLogger(__name__)
 settings = get_settings()
 
 
-class S3Storage:
+class StorageClient(ABC):
+    """Abstract base class for storage clients."""
+
+    @abstractmethod
+    def upload_file(self, key: str, content: bytes, content_type: str) -> None:
+        """Upload a file to storage."""
+        pass
+
+    @abstractmethod
+    def download_file(self, key: str) -> bytes:
+        """Download a file from storage."""
+        pass
+
+    @abstractmethod
+    def delete_file(self, key: str) -> None:
+        """Delete a file from storage."""
+        pass
+
+    @abstractmethod
+    def generate_presigned_url(self, key: str, expiration: int = 3600) -> str:
+        """Generate a presigned URL for accessing a file."""
+        pass
+
+    @abstractmethod
+    def file_exists(self, key: str) -> bool:
+        """Check if a file exists in storage."""
+        pass
+
+
+class S3Storage(StorageClient):
     """S3-compatible storage client."""
 
     def __init__(self):

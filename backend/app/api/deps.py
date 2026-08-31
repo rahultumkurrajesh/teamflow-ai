@@ -30,10 +30,13 @@ from app.repositories.user import UserRepository
 from app.services.auth import AuthService
 from app.services.comment import CommentService
 from app.services.document import DocumentService
+from app.services.document_chunk import DocumentChunkService
 from app.services.notification import NotificationService
 from app.services.project import ProjectService
 from app.services.task import TaskService
 from app.services.user import UserService
+from app.core.embeddings import get_embeddings_client
+from app.core.storage import storage
 
 # auto_error=False so a missing header raises our own AuthError and comes back
 # in the project's {"error": {...}} envelope, rather than FastAPI's default
@@ -110,3 +113,8 @@ def get_notification_service(db: Session = Depends(get_db)) -> NotificationServi
 
 def get_document_service(db: Session = Depends(get_db)) -> DocumentService:
     return DocumentService(DocumentRepository(db), db)
+
+
+def get_document_chunk_service(db: Session = Depends(get_db)) -> DocumentChunkService:
+    embeddings_client = get_embeddings_client()
+    return DocumentChunkService(db, storage, embeddings_client)

@@ -7,6 +7,8 @@ only flushes.
 
 Files are stored in S3-compatible storage (MinIO locally, real S3 in production).
 The service handles uploading to storage and writing metadata to the database.
+After upload, an embedding job is enqueued to extract text, chunk, and embed the
+document asynchronously (Stage 9b RAG pipeline).
 """
 import uuid
 import logging
@@ -97,6 +99,20 @@ class DocumentService:
 
         self.db.commit()
         self.db.refresh(document)
+
+        # Enqueue embedding job (Stage 9b RAG pipeline)
+        try:
+            from app.core.queue import enqueue_job
+            from app.workers.embeddings import handle_document_embedding
+
+            enqueue_job(handle_document_embedding, str(document.id))
+            logger.info(f"Enqueued embedding job for document {document.id}")
+        except Exception as e:
+            logger.warning(
+                f"Failed to enqueue embedding job for document {document.id}: {e}"
+            )
+            # Non-fatal: document was uploaded successfully even if embedding job failed to enqueue
+
         return document
 
     def get(self, current_user: User, project_id: uuid.UUID, document_id: uuid.UUID) -> Document:

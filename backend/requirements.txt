@@ -15,6 +15,9 @@ rq==2.*
 boto3==1.28.*
 botocore==1.31.*
 pgvector==0.3.6
+openai==1.*
+pdfplumber==0.10.*
+tiktoken==0.7.*
 
 # dev / test
 pytest==8.*
