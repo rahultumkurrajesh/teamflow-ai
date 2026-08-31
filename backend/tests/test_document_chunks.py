@@ -31,6 +31,7 @@ class FakeEmbeddingsClient(EmbeddingsClient):
 
     Returns DIFFERENT vectors for each unique text using a hash-based approach,
     enabling meaningful tests of retrieval ordering and similarity search.
+    Uses 384 dimensions to match all-MiniLM-L6-v2 (local default model).
     """
 
     def embed_text(self, text: str) -> list[float]:
@@ -43,7 +44,7 @@ class FakeEmbeddingsClient(EmbeddingsClient):
 
     @staticmethod
     def _hash_to_embedding(text: str) -> list[float]:
-        """Generate a 1536-dim embedding from text hash.
+        """Generate a 384-dim embedding from text hash.
 
         Uses text hash to seed values across the vector space so similar texts
         have similar embeddings, and different texts have different embeddings.
@@ -53,9 +54,9 @@ class FakeEmbeddingsClient(EmbeddingsClient):
         hash_obj = hashlib.sha256(text.encode())
         hash_int = int(hash_obj.hexdigest()[:16], 16)
 
-        # Create embedding by seeding with hash and cycling values
+        # Create embedding by seeding with hash and cycling values (384 dims)
         embedding = []
-        for i in range(1536):
+        for i in range(384):
             # Use hash to generate values in range [0.1, 1.0] for variety
             seed = (hash_int + i) % 10000
             value = 0.1 + (seed / 10000.0) * 0.9
@@ -252,7 +253,7 @@ class TestFakeEmbeddingsClient:
         """Embed text should return a vector."""
         client = FakeEmbeddingsClient()
         embedding = client.embed_text("test text")
-        assert len(embedding) == 1536
+        assert len(embedding) == 384  # all-MiniLM-L6-v2 dimension
         assert 0.0 <= min(embedding) and max(embedding) <= 1.0
 
     def test_embed_batch_returns_vectors(self) -> None:
@@ -260,7 +261,7 @@ class TestFakeEmbeddingsClient:
         client = FakeEmbeddingsClient()
         embeddings = client.embed_batch(["text1", "text2", "text3"])
         assert len(embeddings) == 3
-        assert all(len(v) == 1536 for v in embeddings)
+        assert all(len(v) == 384 for v in embeddings)  # all-MiniLM-L6-v2 dimension
 
     def test_embed_text_returns_distinguishable_vectors(self) -> None:
         """Different texts should produce different embeddings."""
@@ -307,7 +308,7 @@ class TestDocumentChunkRepository:
                 document_id=document.id,
                 chunk_index=i,
                 content=f"Chunk {i}",
-                embedding=[1.0] * 1536,
+                embedding=[1.0] * 384,
             )
             for i in range(3)
         ]
@@ -323,7 +324,7 @@ class TestDocumentChunkRepository:
                 document_id=document.id,
                 chunk_index=i,
                 content=f"Chunk {i}",
-                embedding=[1.0] * 1536,
+                embedding=[1.0] * 384,
             )
             for i in range(3)
         ]
@@ -342,7 +343,7 @@ class TestDocumentChunkRepository:
                 document_id=document.id,
                 chunk_index=i,
                 content=f"Chunk {i}",
-                embedding=[1.0] * 1536,
+                embedding=[1.0] * 384,
             )
             for i in range(3)
         ]
@@ -433,7 +434,7 @@ class TestDocumentChunkService:
         assert len(chunks) == chunk_count
         for chunk in chunks:
             assert chunk.embedding is not None
-            assert len(chunk.embedding) == 1536
+            assert len(chunk.embedding) == 384  # all-MiniLM-L6-v2 dimension
             # Fake embeddings are distinguishable, not all 1.0
             assert not all(v == 1.0 for v in chunk.embedding)
 
@@ -458,7 +459,7 @@ class TestRetrieval:
         emb2 = client.embed_text("orange")
         # Verify vectors are genuinely different (distinguishable)
         assert emb1 != emb2
-        assert len(emb1) == 1536
+        assert len(emb1) == 384  # all-MiniLM-L6-v2 dimension
 
 
 class TestRAGQuery:

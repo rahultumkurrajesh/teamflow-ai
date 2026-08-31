@@ -21,13 +21,20 @@ echo "MinIO initialization starting..."
 echo "Endpoint: $ENDPOINT"
 echo "Bucket: $BUCKET_NAME"
 
-# Wait for MinIO to be ready (retry a few times)
-max_attempts=10
+# Wait for MinIO to be ready using health endpoint (retry a few times)
+max_attempts=30
 attempt=0
-until nc -z minio 9000 || [ $attempt -eq $max_attempts ]; do
-  echo "Waiting for MinIO to be ready... (attempt $((attempt + 1))/$max_attempts)"
-  sleep 2
+while [ $attempt -lt $max_attempts ]; do
+  if curl -sf "$ENDPOINT/minio/health/live" > /dev/null 2>&1; then
+    echo "MinIO is ready."
+    break
+  fi
+
   attempt=$((attempt + 1))
+  if [ $attempt -lt $max_attempts ]; then
+    echo "Waiting for MinIO to be ready... (attempt $attempt/$max_attempts)"
+    sleep 2
+  fi
 done
 
 if [ $attempt -eq $max_attempts ]; then

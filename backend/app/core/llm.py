@@ -76,11 +76,34 @@ Provide a clear, concise answer based only on the context above. If the answer i
         return response.choices[0].message.content or ""
 
 
+class NoOpLLM(LLMClient):
+    """No-op LLM client when no API key is configured.
+
+    Returns a note that LLM answer generation is disabled.
+    """
+
+    def answer_question(self, question: str, context_chunks: list[str]) -> str:
+        """Return a note that LLM is disabled."""
+        chunk_count = len(context_chunks)
+        chunk_preview = context_chunks[0][:100] if context_chunks else "N/A"
+        return (
+            f"[LLM answer generation disabled - no OPENAI_API_KEY configured]\n\n"
+            f"Retrieved {chunk_count} relevant chunk(s) for your question.\n"
+            f"First chunk preview: {chunk_preview}..."
+        )
+
+
 def get_llm_client() -> LLMClient:
     """Factory function to create LLM client from config.
 
+    If OPENAI_API_KEY is set, uses OpenAI. Otherwise, returns a no-op client
+    that informs the user LLM is disabled but chunks are still retrieved.
+
     Returns:
-        Configured LLMClient instance (currently OpenAI).
+        Configured LLMClient instance (OpenAI or no-op).
     """
     settings = get_settings()
-    return OpenAILLM(api_key=settings.openai_api_key)
+    if settings.openai_api_key:
+        return OpenAILLM(api_key=settings.openai_api_key)
+    else:
+        return NoOpLLM()

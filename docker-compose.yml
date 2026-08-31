@@ -30,14 +30,26 @@ services:
       - "9001:9001"
     volumes:
       - miniodata:/data
-      - ./backend/minio-init.sh:/docker-entrypoint-initdb.d/init-bucket.sh
-    entrypoint: sh
-    command: -c 'minio server /data --console-address ":9001" & sh /docker-entrypoint-initdb.d/init-bucket.sh'
+    command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 5s
       timeout: 3s
       retries: 5
+
+  minio-init:
+    image: minio/mc:latest
+    environment:
+      MC_HOST_minio: http://minioadmin:minioadmin@minio:9000
+    entrypoint: >
+      sh -c "
+      /usr/bin/mc alias set minio http://minio:9000 minioadmin minioadmin &&
+      /usr/bin/mc mb minio/teamflow || true &&
+      exit 0
+      "
+    depends_on:
+      minio:
+        condition: service_healthy
 
   backend:
     build: ./backend
@@ -51,6 +63,8 @@ services:
         condition: service_started
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   worker:
     build:
@@ -64,6 +78,8 @@ services:
         condition: service_started
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

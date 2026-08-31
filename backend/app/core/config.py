@@ -40,8 +40,8 @@ class Settings(BaseSettings):
     s3_region: str = Field(default="us-east-1")
 
     # RAG & Embeddings
-    embedding_dimension: int = Field(default=1536)  # OpenAI text-embedding-3-small dimension
-    openai_api_key: str = Field(default="")  # OpenAI API key for embeddings (empty in dev, set in prod)
+    embedding_dimension: int = Field(default=384)  # all-MiniLM-L6-v2 dimension (local model by default)
+    openai_api_key: str = Field(default="")  # OpenAI API key for embeddings (optional, empty in dev)
 
     # Auth (overridden in every non-dev environment)
     jwt_secret_key: str = Field(default="dev-only-change-me")

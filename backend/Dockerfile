@@ -3,7 +3,11 @@
 FROM python:3.12-slim AS builder
 WORKDIR /install
 COPY requirements.txt .
-RUN pip install --no-cache-dir --prefix=/install/deps -r requirements.txt
+# Install all dependencies in one command with CPU-only PyTorch index.
+# This prevents pip from re-resolving torch to the CUDA version when installing requirements.txt
+RUN pip install --no-cache-dir --prefix=/install/deps \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    -r requirements.txt
 
 FROM python:3.12-slim AS runtime
 # Run as a non-root user. If the container is ever compromised, the attacker

@@ -53,7 +53,7 @@ class DocumentChunk(Base, TimestampMixin):
     chunk_index: Mapped[int] = mapped_column(nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
-    # Vector embedding: dimension configured via settings (default 1536 for OpenAI)
+    # Vector embedding: dimension configured via settings (default 384 for all-MiniLM-L6-v2)
     embedding: Mapped[Vector] = mapped_column(
         Vector(dim=settings.embedding_dimension), nullable=True
     )

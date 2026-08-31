@@ -1,11 +1,13 @@
 """Embeddings client for generating vector embeddings from text.
 
 Abstract interface for embeddings generation so providers can be swapped easily
-(OpenAI, Anthropic, local model, etc.). Currently implements OpenAI only.
+(OpenAI, Anthropic, local models, etc.). Currently implements local sentence-transformers
+by default, with OpenAI as a fallback.
 """
 from abc import ABC, abstractmethod
 
 from openai import OpenAI
+from sentence_transformers import SentenceTransformer
 
 from app.core.config import get_settings
 
@@ -36,6 +38,32 @@ class EmbeddingsClient(ABC):
             A list of embedding vectors (each is a list of floats).
         """
         pass
+
+
+class LocalEmbeddings(EmbeddingsClient):
+    """Local embeddings client using sentence-transformers.
+
+    Uses the all-MiniLM-L6-v2 model (384 dimensions) for efficient,
+    no-API-key-required embeddings. Suitable for development and on-premises use.
+    """
+
+    MODEL = "all-MiniLM-L6-v2"  # 384 dimensions, fast, no API key needed
+
+    def __init__(self):
+        """Initialize sentence-transformers model."""
+        self.model = SentenceTransformer(self.MODEL)
+
+    def embed_text(self, text: str) -> list[float]:
+        """Generate embedding for a single text string."""
+        embedding = self.model.encode(text, convert_to_tensor=False)
+        return embedding.tolist()
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        """Generate embeddings for multiple text strings."""
+        if not texts:
+            return []
+        embeddings = self.model.encode(texts, convert_to_tensor=False)
+        return embeddings.tolist()
 
 
 class OpenAIEmbeddings(EmbeddingsClient):
@@ -69,8 +97,15 @@ class OpenAIEmbeddings(EmbeddingsClient):
 def get_embeddings_client() -> EmbeddingsClient:
     """Factory function to create embeddings client from config.
 
+    Defaults to LocalEmbeddings (sentence-transformers, no API key needed).
+    If OPENAI_API_KEY is set in config, uses OpenAI instead.
+
     Returns:
-        Configured EmbeddingsClient instance (currently OpenAI).
+        Configured EmbeddingsClient instance (LocalEmbeddings or OpenAI).
     """
     settings = get_settings()
-    return OpenAIEmbeddings(api_key=settings.openai_api_key)
+    # Use OpenAI if API key is explicitly set, otherwise use local embeddings
+    if settings.openai_api_key:
+        return OpenAIEmbeddings(api_key=settings.openai_api_key)
+    else:
+        return LocalEmbeddings()
