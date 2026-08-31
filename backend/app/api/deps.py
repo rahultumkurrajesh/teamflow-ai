@@ -36,6 +36,7 @@ from app.services.project import ProjectService
 from app.services.task import TaskService
 from app.services.user import UserService
 from app.core.embeddings import get_embeddings_client
+from app.core.llm import get_llm_client
 from app.core.storage import storage
 
 # auto_error=False so a missing header raises our own AuthError and comes back
@@ -117,4 +118,5 @@ def get_document_service(db: Session = Depends(get_db)) -> DocumentService:
 
 def get_document_chunk_service(db: Session = Depends(get_db)) -> DocumentChunkService:
     embeddings_client = get_embeddings_client()
-    return DocumentChunkService(db, storage, embeddings_client)
+    llm_client = get_llm_client()
+    return DocumentChunkService(db, storage, embeddings_client, llm_client)

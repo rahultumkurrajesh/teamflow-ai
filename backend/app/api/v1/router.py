@@ -1,7 +1,7 @@
 """Aggregates every v1 endpoint module into one router."""
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import auth, comments, documents, health, projects, tasks, users
+from app.api.v1.endpoints import auth, comments, documents, health, projects, rag, tasks, users
 
 api_router = APIRouter()
 api_router.include_router(auth.router)
@@ -11,3 +11,4 @@ api_router.include_router(projects.router)
 api_router.include_router(tasks.router)
 api_router.include_router(comments.router)
 api_router.include_router(documents.router)
+api_router.include_router(rag.router)
